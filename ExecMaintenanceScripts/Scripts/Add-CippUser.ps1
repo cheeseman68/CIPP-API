@@ -28,7 +28,7 @@ Write-Host "Connected to $($Context.Account)"
 
 $swa = Get-AzStaticWebApp -ResourceGroupName $ResourceGroup
 $Domain = $swa.CustomDomain | Select-Object -First 1
-
+if ($Domain -eq $null) { $Domain = $swa.DefaultHostname }
 Write-Host "CIPP SWA - $($swa.name)"
 
 if (!$Role) {
@@ -37,9 +37,10 @@ if (!$Role) {
 
 $CurrentUsers = Get-AzStaticWebAppUser -Name $swa.name -ResourceGroupName $ResourceGroup -AuthProvider all | Select-Object DisplayName, Role
 
-$AllUsers = Get-AzADUser -Filter "userType eq 'Member' and accountEnabled eq true" | Select-Object DisplayName, UserPrincipalName
+$AllUsers = Get-AzADUser -Filter "userType eq 'Member' and accountEnabled eq true" | Select-Object DisplayName, UserPrincipalName 
 
-$SelectedUsers = $AllUsers | Where-Object { $CurrentUsers.DisplayName -notcontains $_.UserPrincipalName } | Out-ConsoleGridView -Title "Select users for role '$Role'"
+
+$SelectedUsers = $AllUsers | Where-Object { $CurrentUsers.DisplayName -notcontains $_.UserPrincipalName } | Sort-Object -Property DisplayName | Out-ConsoleGridView -Title "Select users for role '$Role'"
 Write-Host "Selected users: $($SelectedUsers.UserPrincipalName -join ', ')"
 
 Write-Host 'Generating invite links...'
